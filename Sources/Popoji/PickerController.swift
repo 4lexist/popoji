@@ -31,11 +31,15 @@ final class PickerController {
         refreshContent()
 
         let size = panel.contentView?.fittingSize ?? NSSize(width: 520, height: 94)
-        var origin = CGPoint(x: point.x, y: point.y - size.height - 8)
+        let caretGap: CGFloat = 8
+        // NSWindow origins are bottom-left, so this keeps the picker's bottom-left
+        // corner directly above the caret.
+        var origin = CGPoint(x: point.x, y: point.y + caretGap)
         let screen = NSScreen.screens.first { $0.visibleFrame.contains(point) } ?? NSScreen.main
         if let visible = screen?.visibleFrame {
-            origin.x = min(max(origin.x, visible.minX + 8), visible.maxX - size.width - 8)
-            if origin.y < visible.minY + 8 { origin.y = point.y + 20 }
+            if origin.y + size.height > visible.maxY - 8 {
+                origin.y = max(visible.minY + 8, point.y - size.height - caretGap)
+            }
         }
         panel.setFrame(NSRect(origin: origin, size: size), display: true)
         panel.orderFrontRegardless()
@@ -66,7 +70,6 @@ final class PickerController {
 
     private func refreshContent() {
         panel.contentView = NSHostingView(rootView: PickerView(
-            query: query,
             emojis: emojis,
             selectedIndex: selectedIndex,
             onSelect: { [weak self] emoji in self?.choose(emoji) }

@@ -1,51 +1,43 @@
 import SwiftUI
 
 struct PickerView: View {
-    let query: String
     let emojis: [Emoji]
     let selectedIndex: Int
     let onSelect: (Emoji) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(":" + query)
-                    .font(.system(.caption, design: .monospaced, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text("↑↓ select  ↩ insert  esc close")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-
             if emojis.isEmpty {
                 Text("No matching emoji")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 46)
             } else {
-                HStack(spacing: 6) {
+                VStack(spacing: 2) {
                     ForEach(Array(emojis.enumerated()), id: \.element.id) { index, emoji in
                         Button {
                             onSelect(emoji)
                         } label: {
-                            VStack(spacing: 3) {
-                                Text(emoji.symbol).font(.system(size: 28))
+                            HStack(spacing: 10) {
+                                Text(emoji.symbol)
+                                    .font(.system(size: 24))
+                                    .frame(width: 32)
                                 Text(emoji.name)
-                                    .font(.system(size: 9))
+                                    .font(.callout)
                                     .lineLimit(1)
+                                Spacer()
                             }
-                            .frame(width: 56, height: 52)
+                            .padding(.horizontal, 8)
+                            .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
                             .background(index == selectedIndex ? Color.accentColor.opacity(0.22) : Color.clear)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                         .buttonStyle(.plain)
                     }
                 }
             }
         }
-        .padding(12)
-        .frame(width: 520)
+        .padding(.vertical, 6)
+        .frame(width: 320)
         .background(.ultraThickMaterial)
     }
 }

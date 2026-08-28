@@ -113,9 +113,18 @@ final class KeyboardMonitor {
             case 53: // escape
                 Task { @MainActor in self.delegate?.keyboardMonitorCancelSelection(self) }
                 return nil
+            case 51 where flags.contains(.maskCommand) || flags.contains(.maskAlternate): // command / option-delete
+                Task { @MainActor in self.delegate?.keyboardMonitorCancelSelection(self) }
+                return nil
             case 51: // delete
-                if buffer.count > 1 { buffer.removeLast() }
-                notifyQueryChanged()
+                if buffer.count > 1 {
+                    buffer.removeLast()
+                    notifyQueryChanged()
+                } else {
+                    buffer = ""
+                    isPickerVisible = false
+                    Task { @MainActor in self.delegate?.keyboardMonitorCancelSelection(self) }
+                }
                 return Unmanaged.passUnretained(event)
             default:
                 if !flags.contains(.maskCommand),
@@ -177,23 +186,102 @@ final class KeyboardMonitor {
               let focusedValue else { return nil }
         let focused = focusedValue as! AXUIElement
 
+        // Web-based editors commonly expose text-marker ranges instead of the
+        // standard CFRange-based attributes used by native text controls.
+        if let rect = textMarkerBounds(in: focused) {
+            guard let primaryScreen = NSScreen.screens.first else { return nil }
+            return CGPoint(x: rect.minX, y: primaryScreen.frame.maxY - rect.minY)
+        }
+
         var rangeValue: CFTypeRef?
         guard AXUIElementCopyAttributeValue(focused, kAXSelectedTextRangeAttribute as CFString, &rangeValue) == .success,
               let rangeValue else { return nil }
 
+        let selectedRangeValue = rangeValue as! AXValue
+        var selectedRange = CFRange()
+        guard AXValueGetType(selectedRangeValue) == .cfRange,
+              AXValueGetValue(selectedRangeValue, .cfRange, &selectedRange)
+        else { return nil }
+
+        var caretX: CGFloat
+        var caretY: CGFloat
+        if let rect = bounds(for: selectedRangeValue, in: focused) {
+            caretX = rect.minX
+            caretY = rect.minY
+        } else if selectedRange.location > 0 {
+            // Chromium-based editors can expose a selected range but no bounds for
+            // its zero-length insertion point. The trailing edge of the preceding
+            // character is the same caret position.
+            var precedingRange = CFRange(location: selectedRange.location - 1, length: 1)
+            guard let precedingRangeValue = AXValueCreate(.cfRange, &precedingRange),
+                  let rect = bounds(for: precedingRangeValue, in: focused)
+            else { return nil }
+            caretX = rect.maxX
+            caretY = rect.minY
+        } else {
+            // At the start of the text there is no preceding character, so use the
+            // leading edge of the first character instead.
+            var firstRange = CFRange(location: 0, length: 1)
+            guard let firstRangeValue = AXValueCreate(.cfRange, &firstRange),
+                  let rect = bounds(for: firstRangeValue, in: focused)
+            else { return nil }
+            caretX = rect.minX
+            caretY = rect.minY
+        }
+
+        // Accessibility coordinates start at the top-left; AppKit starts at the bottom-left.
+        // Return the caret's upper-left corner so the picker can sit directly above it.
+        guard let primaryScreen = NSScreen.screens.first else { return nil }
+        return CGPoint(x: caretX, y: primaryScreen.frame.maxY - caretY)
+    }
+
+    private static func textMarkerBounds(in element: AXUIElement) -> CGRect? {
+        var markerRange: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(
+            element,
+            "AXSelectedTextMarkerRange" as CFString,
+            &markerRange
+        ) == .success,
+              let markerRange
+        else { return nil }
+
         var boundsValue: CFTypeRef?
         guard AXUIElementCopyParameterizedAttributeValue(
-            focused,
-            kAXBoundsForRangeParameterizedAttribute as CFString,
-            rangeValue,
+            element,
+            "AXBoundsForTextMarkerRange" as CFString,
+            markerRange,
             &boundsValue
-        ) == .success, let boundsValue else { return nil }
+        ) == .success,
+              let boundsValue
+        else { return nil }
 
         var rect = CGRect.zero
-        guard AXValueGetValue(boundsValue as! AXValue, .cgRect, &rect) else { return nil }
-        // Accessibility coordinates start at the top-left; AppKit starts at the bottom-left.
-        guard let screen = NSScreen.screens.first else { return nil }
-        return CGPoint(x: rect.minX, y: screen.frame.maxY - rect.maxY)
+        guard AXValueGetValue(boundsValue as! AXValue, .cgRect, &rect),
+              rect.height > 0,
+              rect.minX.isFinite,
+              rect.minY.isFinite
+        else { return nil }
+        return rect
+    }
+
+    private static func bounds(for range: AXValue, in element: AXUIElement) -> CGRect? {
+        var boundsValue: CFTypeRef?
+        guard AXUIElementCopyParameterizedAttributeValue(
+            element,
+            kAXBoundsForRangeParameterizedAttribute as CFString,
+            range,
+            &boundsValue
+        ) == .success,
+              let boundsValue
+        else { return nil }
+
+        var rect = CGRect.zero
+        guard AXValueGetValue(boundsValue as! AXValue, .cgRect, &rect),
+              rect.height > 0,
+              rect.minX.isFinite,
+              rect.minY.isFinite
+        else { return nil }
+        return rect
     }
 }
 
