@@ -9,7 +9,8 @@ struct Emoji: Identifiable, Hashable {
 
     func matches(_ query: String) -> Bool {
         let normalized = query.lowercased()
-        return name.hasPrefix(normalized) || aliases.contains { $0.hasPrefix(normalized) }
+        return name.lowercased().contains(normalized)
+            || aliases.contains { $0.lowercased().contains(normalized) }
     }
 }
 
