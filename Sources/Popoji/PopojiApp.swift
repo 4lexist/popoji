@@ -42,6 +42,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, Keyb
     private let monitor = KeyboardMonitor()
     private let picker = PickerController()
     private var didRequestInitialStart = false
+    private var permissionPollTimer: Timer?
 
     override init() {
         super.init()
@@ -87,9 +88,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, Keyb
         guard AXIsProcessTrustedWithOptions(options) else {
             monitor.stop()
             statusText = "Accessibility permission required"
+            startPermissionPolling()
             return
         }
+        stopPermissionPolling()
         statusText = monitor.start() ? "Listening" : "Could not start keyboard listener"
+    }
+
+    private func startPermissionPolling() {
+        guard permissionPollTimer == nil else { return }
+
+        permissionPollTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            guard AXIsProcessTrusted() else { return }
+
+            Task { @MainActor [weak self] in
+                self?.updatePermissionAndStart(promptIfNeeded: false)
+            }
+        }
+    }
+
+    private func stopPermissionPolling() {
+        permissionPollTimer?.invalidate()
+        permissionPollTimer = nil
     }
 
     func keyboardMonitor(_ monitor: KeyboardMonitor, didMatch query: String, near point: CGPoint) {
