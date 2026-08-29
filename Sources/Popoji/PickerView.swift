@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct PickerView: View {
-    private static let maximumVisibleRows = 8
+    private static let fullyVisibleRows = 7
+    private static let partialRowFraction: CGFloat = 0.5
     private static let rowHeight: CGFloat = 30
     private static let rowSpacing: CGFloat = 2
 
@@ -48,15 +49,18 @@ struct PickerView: View {
                 }
             }
         }
-        .padding(.vertical, 6)
         .frame(width: 320)
-        .background(.ultraThickMaterial)
+        .background(.ultraThinMaterial)
     }
 
     private var listHeight: CGFloat {
-        let visibleRows = min(emojis.count, Self.maximumVisibleRows)
-        return CGFloat(visibleRows) * Self.rowHeight
-            + CGFloat(max(visibleRows - 1, 0)) * Self.rowSpacing
+        let fullRows = min(emojis.count, Self.fullyVisibleRows)
+        let hasPartialRow = emojis.count > Self.fullyVisibleRows
+        let visibleSpacings = min(max(emojis.count - 1, 0), Self.fullyVisibleRows)
+
+        return CGFloat(fullRows) * Self.rowHeight
+            + (hasPartialRow ? Self.rowHeight * Self.partialRowFraction : 0)
+            + CGFloat(visibleSpacings) * Self.rowSpacing
     }
 
     private func scrollToSelection(using proxy: ScrollViewProxy) {
