@@ -40,6 +40,7 @@ BIN_DIR="$(swift build -c "$CONFIGURATION" --show-bin-path)"
 mkdir -p "$CONTENTS_DIR/MacOS" "$CONTENTS_DIR/Resources"
 cp "$BIN_DIR/Popoji" "$CONTENTS_DIR/MacOS/Popoji"
 cp "$PROJECT_DIR/Resources/Info.plist" "$CONTENTS_DIR/Info.plist"
+cp "$PROJECT_DIR/Resources/Popoji.icns" "$CONTENTS_DIR/Resources/Popoji.icns"
 
 codesign --force --deep --sign "$SIGNING_IDENTITY" "$APP_DIR"
 codesign --verify --deep --strict "$APP_DIR"
