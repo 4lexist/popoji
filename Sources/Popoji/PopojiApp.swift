@@ -7,13 +7,17 @@ struct PopojiApp: App {
 
     var body: some Scene {
         MenuBarExtra("Popoji", systemImage: "face.smiling") {
-            MenuContent(appDelegate: appDelegate)
+            MenuContent(
+                appDelegate: appDelegate,
+                exclusionStore: appDelegate.exclusionStore
+            )
         }
     }
 }
 
 private struct MenuContent: View {
     @ObservedObject var appDelegate: AppDelegate
+    @ObservedObject var exclusionStore: AppExclusionStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -22,6 +26,21 @@ private struct MenuContent: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Divider()
+            Button(appDelegate.exclusionActionTitle) {
+                appDelegate.toggleExclusionForCurrentApplication()
+            }
+            .disabled(appDelegate.currentApplication == nil)
+            Menu("Disabled Apps") {
+                if exclusionStore.applications.isEmpty {
+                    Text("None")
+                } else {
+                    ForEach(exclusionStore.applications) { application in
+                        Button("Enable in \(application.displayName)") {
+                            appDelegate.enablePopoji(in: application)
+                        }
+                    }
+                }
+            }
             Button("Stats") {
                 appDelegate.showStats()
             }
@@ -41,17 +60,21 @@ private struct MenuContent: View {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, KeyboardMonitorDelegate {
     @Published var statusText = "Starting…"
+    @Published private(set) var currentApplication: ExcludedApplication?
 
     private let monitor = KeyboardMonitor()
     private let usageStore = EmojiUsageStore()
+    let exclusionStore = AppExclusionStore()
     private lazy var picker = PickerController(usageStore: usageStore)
     private lazy var stats = StatsWindowController(usageStore: usageStore)
     private var didRequestInitialStart = false
     private var permissionPollTimer: Timer?
+    private var activationObserver: NSObjectProtocol?
 
     override init() {
         super.init()
         configureComponents()
+        observeApplicationChanges()
 
         // Keep startup independent of the menu scene's launch-callback timing.
         // The guard makes this safe when applicationDidFinishLaunching also runs.
@@ -64,12 +87,75 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, Keyb
         requestInitialStartIfNeeded()
     }
 
+    deinit {
+        if let activationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(activationObserver)
+        }
+    }
+
     private func configureComponents() {
         monitor.delegate = self
+        monitor.setExcludedBundleIdentifiers(exclusionStore.bundleIdentifiers)
         picker.onSelect = { [weak self] emoji in
             self?.monitor.replaceTrigger(with: emoji.symbol)
             self?.monitor.setPickerVisible(false)
         }
+    }
+
+    private func observeApplicationChanges() {
+        updateCurrentApplication(NSWorkspace.shared.frontmostApplication)
+        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            let application = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            Task { @MainActor [weak self] in
+                self?.updateCurrentApplication(application)
+            }
+        }
+    }
+
+    private func updateCurrentApplication(_ application: NSRunningApplication?) {
+        guard let application,
+              application.processIdentifier != ProcessInfo.processInfo.processIdentifier,
+              let bundleIdentifier = application.bundleIdentifier
+        else { return }
+
+        currentApplication = ExcludedApplication(
+            bundleIdentifier: bundleIdentifier,
+            displayName: application.localizedName ?? bundleIdentifier
+        )
+
+        if exclusionStore.contains(bundleIdentifier: bundleIdentifier) {
+            picker.close()
+            monitor.setPickerVisible(false)
+        }
+    }
+
+    var exclusionActionTitle: String {
+        guard let currentApplication else { return "Disable in Current App" }
+        let action = exclusionStore.contains(bundleIdentifier: currentApplication.bundleIdentifier)
+            ? "Enable"
+            : "Disable"
+        return "\(action) in \(currentApplication.displayName)"
+    }
+
+    func toggleExclusionForCurrentApplication() {
+        guard let currentApplication else { return }
+        if exclusionStore.contains(bundleIdentifier: currentApplication.bundleIdentifier) {
+            exclusionStore.include(bundleIdentifier: currentApplication.bundleIdentifier)
+        } else {
+            exclusionStore.exclude(currentApplication)
+            picker.close()
+            monitor.setPickerVisible(false)
+        }
+        monitor.setExcludedBundleIdentifiers(exclusionStore.bundleIdentifiers)
+    }
+
+    func enablePopoji(in application: ExcludedApplication) {
+        exclusionStore.include(bundleIdentifier: application.bundleIdentifier)
+        monitor.setExcludedBundleIdentifiers(exclusionStore.bundleIdentifiers)
     }
 
     private func requestInitialStartIfNeeded() {

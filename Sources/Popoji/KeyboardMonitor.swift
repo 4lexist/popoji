@@ -19,6 +19,11 @@ final class KeyboardMonitor {
     private var buffer = ""
     private(set) var isPickerVisible = false
     private var isInjectingText = false
+    private var excludedBundleIdentifiers: Set<String> = []
+
+    func setExcludedBundleIdentifiers(_ bundleIdentifiers: Set<String>) {
+        excludedBundleIdentifiers = bundleIdentifiers
+    }
 
     @discardableResult
     func start() -> Bool {
@@ -96,6 +101,12 @@ final class KeyboardMonitor {
               event.getIntegerValueField(.eventSourceUserData) != Self.injectedEventMarker
         else { return Unmanaged.passUnretained(event) }
 
+        if let bundleIdentifier = NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
+           excludedBundleIdentifiers.contains(bundleIdentifier) {
+            resetForExcludedApplication()
+            return Unmanaged.passUnretained(event)
+        }
+
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
         let flags = event.flags
 
@@ -161,6 +172,13 @@ final class KeyboardMonitor {
         }
 
         return Unmanaged.passUnretained(event)
+    }
+
+    private func resetForExcludedApplication() {
+        buffer = ""
+        guard isPickerVisible else { return }
+        isPickerVisible = false
+        Task { @MainActor in self.delegate?.keyboardMonitorCancelSelection(self) }
     }
 
     private func notifyQueryChanged() {
