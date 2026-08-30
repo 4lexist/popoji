@@ -4,6 +4,7 @@ import SwiftUI
 @MainActor
 final class PickerController {
     private let panel: PickerPanel
+    private let usageStore = EmojiUsageStore()
     private var query = ""
     private var emojis: [Emoji] = []
     private var selectedIndex = 0
@@ -26,7 +27,7 @@ final class PickerController {
 
     func show(query: String, near point: CGPoint) {
         self.query = query
-        emojis = EmojiCatalog.search(query)
+        emojis = EmojiCatalog.search(query, usageCounts: usageStore.counts)
         selectedIndex = 0
         refreshContent()
 
@@ -64,6 +65,7 @@ final class PickerController {
     }
 
     private func choose(_ emoji: Emoji) {
+        usageStore.recordUse(of: emoji)
         close()
         onSelect?(emoji)
     }

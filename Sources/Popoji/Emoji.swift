@@ -1936,7 +1936,7 @@ enum EmojiCatalog {
         Emoji(symbol: "🏴󠁧󠁢󠁷󠁬󠁳󠁿", name: "flag: Wales", aliases: [""]),
     ]
 
-    static func search(_ query: String) -> [Emoji] {
+    static func search(_ query: String, usageCounts: [String: Int] = [:]) -> [Emoji] {
         let limit: Int
         switch query.count {
         case ...2:
@@ -1947,6 +1947,17 @@ enum EmojiCatalog {
             limit = 50
         }
 
-        return Array(all.lazy.filter { $0.matches(query) }.prefix(limit))
+        let matches = all.enumerated().filter { $0.element.matches(query) }
+        let rankedMatches = matches.sorted { lhs, rhs in
+            let lhsCount = usageCounts[lhs.element.symbol, default: 0]
+            let rhsCount = usageCounts[rhs.element.symbol, default: 0]
+
+            if lhsCount != rhsCount {
+                return lhsCount > rhsCount
+            }
+            return lhs.offset < rhs.offset
+        }
+
+        return rankedMatches.prefix(limit).map(\.element)
     }
 }
