@@ -3,12 +3,18 @@ import SwiftUI
 
 @MainActor
 final class PickerController {
+    private enum Placement {
+        case aboveCaret
+        case belowCaret
+    }
+
     private let panel: PickerPanel
     private let usageStore: EmojiUsageStore
     private let skinToneStore: SkinToneStore
     private var query = ""
     private var emojis: [Emoji] = []
     private var selectedIndex = 0
+    private var placement = Placement.aboveCaret
     var onSelect: ((Emoji) -> Void)?
 
     init(usageStore: EmojiUsageStore, skinToneStore: SkinToneStore) {
@@ -44,10 +50,12 @@ final class PickerController {
         // NSWindow origins are bottom-left, so this keeps the picker's bottom-left
         // corner directly above the caret.
         var origin = CGPoint(x: point.x, y: point.y + caretGap)
+        placement = .aboveCaret
         let screen = NSScreen.screens.first { $0.visibleFrame.contains(point) } ?? NSScreen.main
         if let visible = screen?.visibleFrame {
             if origin.y + size.height > visible.maxY - 8 {
                 origin.y = max(visible.minY + 8, point.y - size.height - caretGap)
+                placement = .belowCaret
             }
         }
         panel.setFrame(NSRect(origin: origin, size: size), display: true)
@@ -79,12 +87,34 @@ final class PickerController {
     }
 
     private func refreshContent() {
-        panel.contentView = NSHostingView(rootView: PickerView(
+        let previousFrame = panel.frame
+        let wasVisible = panel.isVisible
+        let hostingView = NSHostingView(rootView: PickerView(
             emojis: emojis,
             selectedIndex: selectedIndex,
             skinToneStore: skinToneStore,
             onSelect: { [weak self] emoji in self?.choose(emoji) }
         ))
+        panel.contentView = hostingView
+
+        guard wasVisible else { return }
+
+        let size = hostingView.fittingSize
+        let originY: CGFloat
+        switch placement {
+        case .aboveCaret:
+            // Keep the bottom edge beside the caret, so fewer results remove
+            // rows from the top of the picker instead of opening up a gap.
+            originY = previousFrame.minY
+        case .belowCaret:
+            // Below the caret, the top edge is the caret-facing edge.
+            originY = previousFrame.maxY - size.height
+        }
+
+        panel.setFrame(
+            NSRect(x: previousFrame.minX, y: originY, width: size.width, height: size.height),
+            display: true
+        )
     }
 }
 
