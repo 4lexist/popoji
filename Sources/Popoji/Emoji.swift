@@ -15,7 +15,31 @@ struct Emoji: Identifiable, Hashable {
 }
 
 enum EmojiCatalog {
-    static let all: [Emoji] = [
+    // Keep this list separate from the Unicode-ordered catalog below so updating
+    // the catalog does not require moving Emoji definitions around.
+    private static let popularSymbols = [
+        "❤️", "😭", "🔥", "😂", "😊", "🥹", "💀", "👀", "😅", "🫶",
+        "🙏", "🥰", "🎉", "👍", "🤣", "😍", "😉", "⚠️", "🤔", "☀️",
+        "☺️", "🎄", "🚀", "🫡", "🤩", "🥺", "😎", "😁", "💪", "😔",
+        "🚨", "😘", "🎁", "🫠", "🫦", "🥳", "🫩", "😈", "😏", "👋",
+        "💔", "🤭", "🫂", "👑", "💖", "❤️‍🔥", "💰", "🙂", "🌟", "⚡",
+        "🥀", "❄️", "🏆", "🗣️", "💗", "🫵", "✨", "😋", "🥵", "🤝",
+        "🫣", "😄", "😆", "🗿", "🥲", "😀", "😱", "🤓", "🙌", "💥",
+        "🙄", "🤖", "🌸", "🤯", "💯", "☕", "😇", "💕", "👏", "✈️",
+        "📈", "🧿", "🎀", "😳", "🎃", "🖕", "🤤", "🌊", "🤫", "😮‍💨",
+        "‼️", "🧠", "💎", "🤡", "🤗", "⚽", "👻", "🤑", "🎯", "😌",
+        "🫀", "🎂", "😡", "🤪", "💦", "📣", "🎅", "💩", "🌞", "🟡",
+        "😃", "🤨", "🙃", "☠️", "💋", "✌️", "😜", "😬", "🥂", "🤞",
+        "😢", "🌱", "🌎", "🙂‍↕️", "🥶", "🫪", "😝", "🐶", "🙈", "🎤",
+        "🏳️‍🌈", "🌹", "😲", "🍀", "✍️", "💍", "👌", "🌈", "❌", "✅",
+        "🔫", "⭐", "💫", "🥇", "🩸", "😛", "💅", "😴", "😩", "🔊",
+        "🌴", "😒", "☝️", "💞", "🚬", "😠", "🦋", "🤌", "🚫", "😵‍💫",
+        "🌻", "😞", "😨", "🧐", "🫰", "🚩", "👅", "🤮", "👽", "🍕",
+        "🪷", "💃", "😤", "🕊️", "🤠", "🍑", "🍷", "💤", "😮", "🌼",
+        "🍆", "😐", "🤬", "🥱", "🥷", "🍃", "🔞", "🍻",
+    ]
+
+    private static let unicodeOrdered: [Emoji] = [
         Emoji(symbol: "😀", name: "grinning face", aliases: ["happy"]),
         Emoji(symbol: "😃", name: "grinning face with big eyes", aliases: [""]),
         Emoji(symbol: "😄", name: "grinning face with smiling eyes", aliases: ["^^"]),
@@ -1075,13 +1099,13 @@ enum EmojiCatalog {
         Emoji(symbol: "🌪️", name: "tornado", aliases: [""]),
         Emoji(symbol: "🌫️", name: "fog", aliases: [""]),
         Emoji(symbol: "🌬️", name: "wind face", aliases: [""]),
-        Emoji(symbol: "🌀", name: "cyclone", aliases: [""]),
+        Emoji(symbol: "🌀", name: "cyclone", aliases: ["spiral"]),
         Emoji(symbol: "🌈", name: "rainbow", aliases: ["pride", "gay"]),
         Emoji(symbol: "🌂", name: "closed umbrella", aliases: [""]),
-        Emoji(symbol: "☂️", name: "umbrella", aliases: [""]),
+        Emoji(symbol: "☂️", name: "umbrella", aliases: ["rain"]),
         Emoji(symbol: "☔", name: "umbrella with rain drops", aliases: [""]),
         Emoji(symbol: "⛱️", name: "umbrella on ground", aliases: [""]),
-        Emoji(symbol: "⚡", name: "high voltage", aliases: [""]),
+        Emoji(symbol: "⚡", name: "high voltage", aliases: ["zap", "ligntning"]),
         Emoji(symbol: "❄️", name: "snowflake", aliases: [""]),
         Emoji(symbol: "☃️", name: "snowman", aliases: [""]),
         Emoji(symbol: "⛄", name: "snowman without snow", aliases: [""]),
@@ -1111,7 +1135,7 @@ enum EmojiCatalog {
         Emoji(symbol: "🎟️", name: "admission tickets", aliases: [""]),
         Emoji(symbol: "🎫", name: "ticket", aliases: [""]),
         Emoji(symbol: "🎖️", name: "military medal", aliases: [""]),
-        Emoji(symbol: "🏆", name: "trophy", aliases: [""]),
+        Emoji(symbol: "🏆", name: "trophy", aliases: ["champion"]),
         Emoji(symbol: "🏅", name: "sports medal", aliases: [""]),
         Emoji(symbol: "🥇", name: "1st place medal", aliases: [""]),
         Emoji(symbol: "🥈", name: "2nd place medal", aliases: [""]),
@@ -1437,11 +1461,11 @@ enum EmojiCatalog {
         Emoji(symbol: "⚱️", name: "funeral urn", aliases: [""]),
         Emoji(symbol: "🧿", name: "nazar amulet", aliases: [""]),
         Emoji(symbol: "🪬", name: "hamsa", aliases: [""]),
-        Emoji(symbol: "🗿", name: "moai", aliases: [""]),
+        Emoji(symbol: "🗿", name: "moai", aliases: ["oof", "stone"]),
         Emoji(symbol: "🪧", name: "placard", aliases: [""]),
         Emoji(symbol: "🪪", name: "identification card", aliases: [""]),
         Emoji(symbol: "🏧", name: "ATM sign", aliases: [""]),
-        Emoji(symbol: "🚮", name: "litter in bin sign", aliases: [""]),
+        Emoji(symbol: "🚮", name: "litter in bin sign", aliases: ["garbage", "trash"]),
         Emoji(symbol: "🚰", name: "potable water", aliases: [""]),
         Emoji(symbol: "♿", name: "wheelchair symbol", aliases: [""]),
         Emoji(symbol: "🚹", name: "men’s room", aliases: [""]),
@@ -1935,6 +1959,15 @@ enum EmojiCatalog {
         Emoji(symbol: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", name: "flag: Scotland", aliases: [""]),
         Emoji(symbol: "🏴󠁧󠁢󠁷󠁬󠁳󠁿", name: "flag: Wales", aliases: [""]),
     ]
+
+    static let all: [Emoji] = {
+        let emojisBySymbol = Dictionary(
+            uniqueKeysWithValues: unicodeOrdered.map { ($0.symbol, $0) }
+        )
+        let popular = popularSymbols.compactMap { emojisBySymbol[$0] }
+        let popularSet = Set(popularSymbols)
+        return popular + unicodeOrdered.filter { !popularSet.contains($0.symbol) }
+    }()
 
     static func search(_ query: String, usageCounts: [String: Int] = [:]) -> [Emoji] {
         let limit: Int
