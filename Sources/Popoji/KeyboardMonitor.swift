@@ -126,7 +126,7 @@ final class KeyboardMonitor {
                 return nil
             case 51 where flags.contains(.maskCommand) || flags.contains(.maskAlternate): // command / option-delete
                 Task { @MainActor in self.delegate?.keyboardMonitorCancelSelection(self) }
-                return nil
+                return Unmanaged.passUnretained(event)
             case 51: // delete
                 if buffer.count > 1 {
                     buffer.removeLast()
