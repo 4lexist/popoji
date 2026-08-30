@@ -40,3 +40,10 @@ The first launch asks for Accessibility permission. Enable Popoji in **System Se
   **Disabled Apps** submenu to enable it again later.
 
 The initial emoji catalog lives in `Sources/Popoji/Emoji.swift` and can be expanded without changing the picker logic.
+
+
+##
+TODO: 
+* Manage color skins (at top level)
+* Allow adding custom alias to emojis
+* Translations
