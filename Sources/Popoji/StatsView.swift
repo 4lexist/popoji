@@ -72,6 +72,10 @@ final class StatsWindowController: NSWindowController {
             defer: false
         )
         window.title = "Stats"
+        // Popoji is a menu-bar-only app, so keep this window above regular app
+        // windows and move it to whichever Space the user is currently viewing.
+        window.level = .floating
+        window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
         window.contentView = NSHostingView(rootView: StatsView(usageStore: usageStore))
         window.center()
         window.isReleasedWhenClosed = false
@@ -84,8 +88,15 @@ final class StatsWindowController: NSWindowController {
     }
 
     func show() {
-        NSApplication.shared.activate(ignoringOtherApps: true)
-        showWindow(nil)
-        window?.makeKeyAndOrderFront(nil)
+        // Wait for the menu to dismiss before changing application and window
+        // ordering; otherwise macOS can place the new window behind the app
+        // that was active before the menu was opened.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let window = self.window else { return }
+            NSApplication.shared.activate(ignoringOtherApps: true)
+            self.showWindow(nil)
+            window.orderFrontRegardless()
+            window.makeKey()
+        }
     }
 }
