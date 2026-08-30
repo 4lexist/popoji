@@ -188,7 +188,7 @@ final class KeyboardMonitor {
     }
 
     private static func isQueryCharacter(_ character: String) -> Bool {
-        character.range(of: "^[a-zA-Z0-9+-]$", options: .regularExpression) != nil
+        character.range(of: "^[a-zA-Z0-9+ -]$", options: .regularExpression) != nil
     }
 
     private func postKey(source: CGEventSource?, keyCode: CGKeyCode, keyDown: Bool) {

@@ -38,7 +38,7 @@ The first launch asks for Accessibility permission. Enable Popoji in **System Se
 - Choose **Skin Tone** from Popoji's menu to use the neutral emoji style or one
   of the five Unicode skin tones. The choice is remembered between launches.
 - To stop Popoji from listening in a particular app, switch to that app, open
-  Popoji's menu-bar menu, and choose **Disable in &lt;App Name&gt;**. Use the
+  Popoji's menu-bar menu, and choose **Disable for &lt;App Name&gt;**. Use the
   **Disabled Apps** submenu to enable it again later.
 
 The initial emoji catalog lives in `Sources/Popoji/Emoji.swift` and can be expanded without changing the picker logic.
@@ -49,3 +49,4 @@ TODO:
 * Allow adding custom alias to emojis
 * Translations
 * Allow giving feedback
+

@@ -12,6 +12,11 @@ let package = Package(
         .executableTarget(
             name: "Popoji",
             path: "Sources/Popoji"
+        ),
+        .testTarget(
+            name: "PopojiTests",
+            dependencies: ["Popoji"],
+            path: "Tests/PopojiTests"
         )
     ]
 )

@@ -158,7 +158,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, Keyb
     }
 
     var exclusionActionTitle: String {
-        guard let currentApplication else { return "Disable in Current App" }
+        guard let currentApplication else { return "Disable for Current App" }
         let action = exclusionStore.contains(bundleIdentifier: currentApplication.bundleIdentifier)
             ? "Enable"
             : "Disable"

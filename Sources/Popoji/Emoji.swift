@@ -8,9 +8,31 @@ struct Emoji: Identifiable, Hashable {
     var id: String { name }
 
     func matches(_ query: String) -> Bool {
-        let normalized = query.lowercased()
-        return name.lowercased().contains(normalized)
-            || aliases.contains { $0.lowercased().contains(normalized) }
+        let terms = query
+            .lowercased()
+            .split(whereSeparator: { $0.isWhitespace })
+            .map(String.init)
+        guard !terms.isEmpty else { return false }
+
+        return Self.contains(terms, in: name)
+            || aliases.contains { Self.contains(terms, in: $0) }
+    }
+
+    private static func contains(_ terms: [String], in text: String) -> Bool {
+        let searchableText = text.lowercased().filter { !$0.isWhitespace }
+        var searchStart = searchableText.startIndex
+
+        for term in terms {
+            guard let range = searchableText.range(
+                of: term,
+                range: searchStart..<searchableText.endIndex
+            ) else {
+                return false
+            }
+            searchStart = range.upperBound
+        }
+
+        return true
     }
 }
 
@@ -1479,8 +1501,8 @@ enum EmojiCatalog {
         Emoji(symbol: "🛅", name: "left luggage", aliases: [""]),
         Emoji(symbol: "⚠️", name: "warning", aliases: ["alert"]),
         Emoji(symbol: "🚸", name: "children crossing", aliases: [""]),
-        Emoji(symbol: "⛔", name: "no entry", aliases: [""]),
-        Emoji(symbol: "🚫", name: "prohibited", aliases: [""]),
+        Emoji(symbol: "⛔", name: "no entry", aliases: ["forbidden"]),
+        Emoji(symbol: "🚫", name: "prohibited", aliases: ["forbidden", "one-way", "no"]),
         Emoji(symbol: "🚳", name: "no bicycles", aliases: [""]),
         Emoji(symbol: "🚭", name: "no smoking", aliases: [""]),
         Emoji(symbol: "🚯", name: "no littering", aliases: [""]),
