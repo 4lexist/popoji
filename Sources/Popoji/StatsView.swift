@@ -10,6 +10,7 @@ private struct EmojiStat: Identifiable {
 
 struct StatsView: View {
     @ObservedObject var usageStore: EmojiUsageStore
+    @ObservedObject var skinToneStore: SkinToneStore
 
     private var stats: [EmojiStat] {
         Array(
@@ -44,7 +45,7 @@ struct StatsView: View {
             } else {
                 List(stats) { stat in
                     HStack(spacing: 12) {
-                        Text(stat.emoji.symbol)
+                        Text(skinToneStore.selected.applying(to: stat.emoji.symbol))
                             .font(.system(size: 24))
                             .frame(width: 34)
                         Text(stat.emoji.name)
@@ -64,7 +65,7 @@ struct StatsView: View {
 
 @MainActor
 final class StatsWindowController: NSWindowController {
-    init(usageStore: EmojiUsageStore) {
+    init(usageStore: EmojiUsageStore, skinToneStore: SkinToneStore) {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 440, height: 520),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -76,7 +77,10 @@ final class StatsWindowController: NSWindowController {
         // windows and move it to whichever Space the user is currently viewing.
         window.level = .floating
         window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
-        window.contentView = NSHostingView(rootView: StatsView(usageStore: usageStore))
+        window.contentView = NSHostingView(rootView: StatsView(
+            usageStore: usageStore,
+            skinToneStore: skinToneStore
+        ))
         window.center()
         window.isReleasedWhenClosed = false
         super.init(window: window)

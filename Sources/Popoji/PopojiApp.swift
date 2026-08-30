@@ -9,7 +9,8 @@ struct PopojiApp: App {
         MenuBarExtra("Popoji", systemImage: "face.smiling") {
             MenuContent(
                 appDelegate: appDelegate,
-                exclusionStore: appDelegate.exclusionStore
+                exclusionStore: appDelegate.exclusionStore,
+                skinToneStore: appDelegate.skinToneStore
             )
         }
     }
@@ -18,11 +19,12 @@ struct PopojiApp: App {
 private struct MenuContent: View {
     @ObservedObject var appDelegate: AppDelegate
     @ObservedObject var exclusionStore: AppExclusionStore
+    @ObservedObject var skinToneStore: SkinToneStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(appDelegate.statusText)
-            Text("Type : and two letters, numbers, +, or - in any app")
+            Text("Type : + the emoji name")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Divider()
@@ -37,6 +39,19 @@ private struct MenuContent: View {
                     ForEach(exclusionStore.applications) { application in
                         Button("Enable in \(application.displayName)") {
                             appDelegate.enablePopoji(in: application)
+                        }
+                    }
+                }
+            }
+            Menu("Skin Tone") {
+                ForEach(SkinTone.allCases) { skinTone in
+                    Button {
+                        skinToneStore.selected = skinTone
+                    } label: {
+                        if skinToneStore.selected == skinTone {
+                            Label("\(skinTone.preview)  \(skinTone.name)", systemImage: "checkmark")
+                        } else {
+                            Text("\(skinTone.preview)  \(skinTone.name)")
                         }
                     }
                 }
@@ -65,8 +80,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, Keyb
     private let monitor = KeyboardMonitor()
     private let usageStore = EmojiUsageStore()
     let exclusionStore = AppExclusionStore()
-    private lazy var picker = PickerController(usageStore: usageStore)
-    private lazy var stats = StatsWindowController(usageStore: usageStore)
+    let skinToneStore = SkinToneStore()
+    private lazy var picker = PickerController(
+        usageStore: usageStore,
+        skinToneStore: skinToneStore
+    )
+    private lazy var stats = StatsWindowController(
+        usageStore: usageStore,
+        skinToneStore: skinToneStore
+    )
     private var didRequestInitialStart = false
     private var permissionPollTimer: Timer?
     private var activationObserver: NSObjectProtocol?
@@ -97,8 +119,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, Keyb
         monitor.delegate = self
         monitor.setExcludedBundleIdentifiers(exclusionStore.bundleIdentifiers)
         picker.onSelect = { [weak self] emoji in
-            self?.monitor.replaceTrigger(with: emoji.symbol)
-            self?.monitor.setPickerVisible(false)
+            guard let self else { return }
+            let symbol = self.skinToneStore.selected.applying(to: emoji.symbol)
+            self.monitor.replaceTrigger(with: symbol)
+            self.monitor.setPickerVisible(false)
         }
     }
 

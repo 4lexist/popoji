@@ -8,6 +8,7 @@ struct PickerView: View {
 
     let emojis: [Emoji]
     let selectedIndex: Int
+    @ObservedObject var skinToneStore: SkinToneStore
     let onSelect: (Emoji) -> Void
 
     var body: some View {
@@ -26,7 +27,7 @@ struct PickerView: View {
                                     onSelect(emoji)
                                 } label: {
                                     HStack(spacing: 10) {
-                                        Text(emoji.symbol)
+                                        Text(skinToneStore.selected.applying(to: emoji.symbol))
                                             .font(.system(size: 24))
                                             .frame(width: 32)
                                         Text(emoji.name)

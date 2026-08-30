@@ -5,13 +5,15 @@ import SwiftUI
 final class PickerController {
     private let panel: PickerPanel
     private let usageStore: EmojiUsageStore
+    private let skinToneStore: SkinToneStore
     private var query = ""
     private var emojis: [Emoji] = []
     private var selectedIndex = 0
     var onSelect: ((Emoji) -> Void)?
 
-    init(usageStore: EmojiUsageStore) {
+    init(usageStore: EmojiUsageStore, skinToneStore: SkinToneStore) {
         self.usageStore = usageStore
+        self.skinToneStore = skinToneStore
         panel = PickerPanel(
             contentRect: NSRect(x: 0, y: 0, width: 520, height: 94),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -75,6 +77,7 @@ final class PickerController {
         panel.contentView = NSHostingView(rootView: PickerView(
             emojis: emojis,
             selectedIndex: selectedIndex,
+            skinToneStore: skinToneStore,
             onSelect: { [weak self] emoji in self?.choose(emoji) }
         ))
     }
