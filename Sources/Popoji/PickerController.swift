@@ -4,13 +4,14 @@ import SwiftUI
 @MainActor
 final class PickerController {
     private let panel: PickerPanel
-    private let usageStore = EmojiUsageStore()
+    private let usageStore: EmojiUsageStore
     private var query = ""
     private var emojis: [Emoji] = []
     private var selectedIndex = 0
     var onSelect: ((Emoji) -> Void)?
 
-    init() {
+    init(usageStore: EmojiUsageStore) {
+        self.usageStore = usageStore
         panel = PickerPanel(
             contentRect: NSRect(x: 0, y: 0, width: 520, height: 94),
             styleMask: [.borderless, .nonactivatingPanel],

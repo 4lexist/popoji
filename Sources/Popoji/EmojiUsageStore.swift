@@ -1,10 +1,12 @@
+import Combine
 import Foundation
 
-final class EmojiUsageStore {
+@MainActor
+final class EmojiUsageStore: ObservableObject {
     private static let defaultsKey = "emojiUsageCounts"
 
     private let defaults: UserDefaults
-    private(set) var counts: [String: Int]
+    @Published private(set) var counts: [String: Int]
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults

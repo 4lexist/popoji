@@ -22,6 +22,9 @@ private struct MenuContent: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Divider()
+            Button("Stats") {
+                appDelegate.showStats()
+            }
             Button("Check Accessibility Permission") {
                 appDelegate.requestPermissionAndStart()
             }
@@ -40,7 +43,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, Keyb
     @Published var statusText = "Starting…"
 
     private let monitor = KeyboardMonitor()
-    private let picker = PickerController()
+    private let usageStore = EmojiUsageStore()
+    private lazy var picker = PickerController(usageStore: usageStore)
+    private lazy var stats = StatsWindowController(usageStore: usageStore)
     private var didRequestInitialStart = false
     private var permissionPollTimer: Timer?
 
@@ -79,6 +84,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, Keyb
 
     func refreshPermissionAndStart() {
         updatePermissionAndStart(promptIfNeeded: false)
+    }
+
+    func showStats() {
+        stats.show()
     }
 
     private func updatePermissionAndStart(promptIfNeeded: Bool) {
