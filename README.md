@@ -48,3 +48,4 @@ The initial emoji catalog lives in `Sources/Popoji/Emoji.swift` and can be expan
 TODO: 
 * Allow adding custom alias to emojis
 * Translations
+* Allow giving feedback

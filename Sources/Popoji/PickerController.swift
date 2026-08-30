@@ -34,6 +34,11 @@ final class PickerController {
         selectedIndex = 0
         refreshContent()
 
+        // Keep the picker anchored where it first opened. Query changes arrive
+        // after every typed character, and the caret moves with them; positioning
+        // the panel again here would make it follow the caret across the line.
+        guard !panel.isVisible else { return }
+
         let size = panel.contentView?.fittingSize ?? NSSize(width: 520, height: 94)
         let caretGap: CGFloat = 8
         // NSWindow origins are bottom-left, so this keeps the picker's bottom-left
